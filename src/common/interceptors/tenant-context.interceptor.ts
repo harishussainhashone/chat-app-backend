@@ -5,6 +5,7 @@ import {
   CallHandler,
 } from '@nestjs/common';
 import { Observable } from 'rxjs';
+import { tap } from 'rxjs/operators';
 import { TenantPrismaService } from '../../database/tenant-prisma.service';
 
 /**
@@ -37,15 +38,19 @@ export class TenantContextInterceptor implements NestInterceptor {
       }
     }
 
-    return next.handle().finally(() => {
-      // Clear tenant context after request
-      this.tenantPrisma.setTenant(null);
-      try {
-        this.tenantPrisma.switchSchema('public');
-      } catch (error) {
-        // Ignore errors when resetting schema
-      }
-    });
+    return next.handle().pipe(
+      tap({
+        complete: () => {
+          // Clear tenant context after request completes
+          this.tenantPrisma.setTenant(null);
+          try {
+            this.tenantPrisma.switchSchema('public');
+          } catch (error) {
+            // Ignore errors when resetting schema
+          }
+        },
+      }),
+    );
   }
 }
 

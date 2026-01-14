@@ -65,12 +65,7 @@ import { TenantContextInterceptor } from './common/interceptors/tenant-context.i
   ],
 })
 export class AppModule implements NestModule {
-  configure(consumer: MiddlewareConsumer) {
-    // Apply tenant detection middleware to all routes except public ones
-    consumer
-      .apply(TenantDetectionMiddleware)
-      .exclude('api/auth/(.*)', 'api/widget/(.*)', 'api/docs', 'api/docs-json')
-      .forRoutes('*');
-  }
+  // Tenant detection middleware removed - frontend will handle subdomain routing
+  // Backend will work with direct API calls without subdomain validation
 }
 
