@@ -37,7 +37,9 @@ export class PermissionsGuard implements CanActivate {
       },
     });
 
-    const userPermissions = rolePermissions.map((rp) => rp.permission.name);
+    const userPermissions = rolePermissions.map(
+      (rp: (typeof rolePermissions)[number]) => rp.permission.name,
+    );
 
     // Check if user has all required permissions
     const hasAllPermissions = requiredPermissions.every((permission) =>

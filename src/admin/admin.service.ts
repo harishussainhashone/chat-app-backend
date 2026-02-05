@@ -4,6 +4,35 @@ import { PrismaService } from '../database/prisma.service';
 @Injectable()
 export class AdminService {
   constructor(private prisma: PrismaService) {}
+  private static readonly companyInclude = {
+    subscriptions: {
+      include: {
+        plan: true,
+      },
+    },
+    _count: {
+      select: {
+        users: true,
+        chats: true,
+      },
+    },
+  } as const;
+
+  private static readonly userInclude = {
+    company: {
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+      },
+    },
+    role: {
+      select: {
+        id: true,
+        name: true,
+      },
+    },
+  } as const;
 
   async getPlatformStats() {
     const [
@@ -52,30 +81,19 @@ export class AdminService {
       this.prisma.company.findMany({
         skip,
         take: limit,
-        include: {
-          subscriptions: {
-            include: {
-              plan: true,
-            },
-            take: 1,
-          },
-          _count: {
-            select: {
-              users: true,
-              chats: true,
-            },
-          },
-        },
+        include: AdminService.companyInclude,
         orderBy: { createdAt: 'desc' },
       }),
       this.prisma.company.count(),
     ]);
 
     // Map subscriptions array to subscription object for backward compatibility
-    const companiesWithSubscription = companies.map((company) => ({
+    const companiesWithSubscription = companies.map(
+      (company: (typeof companies)[number]) => ({
       ...company,
-      subscription: company.subscriptions[0] || null,
-    }));
+      subscription: company.subscriptions ?? null,
+    }),
+    );
 
     return {
       data: companiesWithSubscription,
@@ -93,28 +111,16 @@ export class AdminService {
       this.prisma.user.findMany({
         skip,
         take: limit,
-        include: {
-          company: {
-            select: {
-              id: true,
-              name: true,
-              slug: true,
-            },
-          },
-          role: {
-            select: {
-              id: true,
-              name: true,
-            },
-          },
-        },
+        include: AdminService.userInclude,
         orderBy: { createdAt: 'desc' },
       }),
       this.prisma.user.count(),
     ]);
 
     // Remove passwords
-    const usersWithoutPasswords = users.map(({ password, ...user }) => user);
+    const usersWithoutPasswords = users.map(
+      ({ password, ...user }: (typeof users)[number]) => user,
+    );
 
     return {
       data: usersWithoutPasswords,

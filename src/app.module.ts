@@ -1,4 +1,4 @@
-import { Module, MiddlewareConsumer, NestModule } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
@@ -20,7 +20,6 @@ import { WidgetModule } from './widget/widget.module';
 import { AnalyticsModule } from './analytics/analytics.module';
 import { AdminModule } from './admin/admin.module';
 import { RedisModule } from './redis/redis.module';
-import { TenantDetectionMiddleware } from './common/middleware/tenant-detection.middleware';
 import { TenantContextInterceptor } from './common/interceptors/tenant-context.interceptor';
 
 @Module({
@@ -64,8 +63,5 @@ import { TenantContextInterceptor } from './common/interceptors/tenant-context.i
     },
   ],
 })
-export class AppModule implements NestModule {
-  // Tenant detection middleware removed - frontend will handle subdomain routing
-  // Backend will work with direct API calls without subdomain validation
-}
+export class AppModule {}
 

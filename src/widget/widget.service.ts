@@ -17,7 +17,6 @@ export class WidgetService {
           include: {
             plan: true,
           },
-          take: 1,
         },
       },
     });
@@ -30,7 +29,7 @@ export class WidgetService {
       throw new ForbiddenException('Company is inactive');
     }
 
-    const subscription = company.subscriptions[0];
+    const subscription = company.subscriptions;
     if (!subscription || subscription.status !== 'active') {
       throw new ForbiddenException('Company subscription is not active');
     }

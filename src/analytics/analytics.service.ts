@@ -85,7 +85,7 @@ export class AnalyticsService {
     });
 
     const responseTimes = chatsWithFirstResponse
-      .map((chat) => {
+      .map((chat: (typeof chatsWithFirstResponse)[number]) => {
         if (chat.messages.length > 0) {
           return (
             chat.messages[0].createdAt.getTime() - chat.createdAt.getTime()
@@ -93,11 +93,12 @@ export class AnalyticsService {
         }
         return null;
       })
-      .filter((time) => time !== null) as number[];
+      .filter((time: number | null): time is number => time !== null);
 
     const avgResponseTime =
       responseTimes.length > 0
-        ? responseTimes.reduce((a, b) => a + b, 0) / responseTimes.length
+        ? responseTimes.reduce((a: number, b: number) => a + b, 0) /
+          responseTimes.length
         : 0;
 
     return {

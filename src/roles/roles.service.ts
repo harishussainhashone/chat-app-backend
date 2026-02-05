@@ -4,6 +4,7 @@ import {
   ForbiddenException,
   ConflictException,
 } from '@nestjs/common';
+import type { Prisma } from '@prisma/client';
 import { PrismaService } from '../database/prisma.service';
 import { CreateRoleDto } from './dto/create-role.dto';
 import { UpdateRoleDto } from './dto/update-role.dto';
@@ -36,7 +37,7 @@ export class RolesService {
     }
 
     // Create role with permissions
-    const role = await this.prisma.$transaction(async (tx) => {
+    const role = await this.prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       const newRole = await tx.role.create({
         data: {
           name: createRoleDto.name,
@@ -163,7 +164,7 @@ export class RolesService {
     }
 
     // Update role
-    const updatedRole = await this.prisma.$transaction(async (tx) => {
+    const updatedRole = await this.prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       const roleUpdate: any = {};
 
       if (updateRoleDto.name) {

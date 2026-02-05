@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -10,326 +7,273 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// ============================================
-// CORE ENTITIES
-// ============================================
-
 model Company {
-  id                    String   @id @default(uuid())
-  name                  String
-  slug                  String   @unique
-  email                 String
-  phone                 String?
-  website               String?
-  logo                  String?
-  widgetKey             String   @unique @map("widget_key")
-  widgetTheme           Json?    @map("widget_theme") // { primaryColor, logo, position, etc. }
-  isActive              Boolean  @default(true) @map("is_active")
-  createdAt             DateTime @default(now()) @map("created_at")
-  updatedAt             DateTime @updatedAt @map("updated_at")
+  id            String        @id @default(uuid())
+  name          String
+  slug          String        @unique
+  email         String
+  phone         String?
+  website       String?
+  logo          String?
+  widgetKey     String        @unique @map("widget_key")
+  widgetTheme   Json?         @map("widget_theme")
+  isActive      Boolean       @default(true) @map("is_active")
+  createdAt     DateTime      @default(now()) @map("created_at")
+  updatedAt     DateTime      @updatedAt @map("updated_at")
+  analytics     Analytics[]
+  chats         Chat[]
+  departments   Department[]
+  roles         Role[]
+  subscriptions Subscription?
+  users         User[]
 
-  // Relations
-  users                 User[]
-  roles                 Role[]
-  subscriptions         Subscription[]
-  chats                 Chat[]
-  departments           Department[]
-  analytics             Analytics[]
-
-  @@map("companies")
   @@index([slug])
   @@index([widgetKey])
+  @@map("companies")
 }
 
 model User {
-  id                    String   @id @default(uuid())
-  email                 String   @unique
-  password              String
-  firstName             String   @map("first_name")
-  lastName              String   @map("last_name")
-  avatar                String?
-  phone                 String?
-  isActive              Boolean  @default(true) @map("is_active")
-  isEmailVerified       Boolean  @default(false) @map("is_email_verified")
-  lastLoginAt           DateTime? @map("last_login_at")
-  companyId              String   @map("company_id")
-  roleId                 String   @map("role_id")
-  createdAt             DateTime @default(now()) @map("created_at")
-  updatedAt             DateTime @updatedAt @map("updated_at")
+  id              String           @id @default(uuid())
+  email           String           @unique
+  password        String
+  firstName       String           @map("first_name")
+  lastName        String           @map("last_name")
+  avatar          String?
+  phone           String?
+  isActive        Boolean          @default(true) @map("is_active")
+  isEmailVerified Boolean          @default(false) @map("is_email_verified")
+  lastLoginAt     DateTime?        @map("last_login_at")
+  companyId       String           @map("company_id")
+  roleId          String           @map("role_id")
+  createdAt       DateTime         @default(now()) @map("created_at")
+  updatedAt       DateTime         @updatedAt @map("updated_at")
+  analytics       Analytics[]
+  chats           ChatAssignment[]
+  messages        Message[]
+  refreshTokens   RefreshToken[]
+  userDepartments UserDepartment[]
+  company         Company          @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  role            Role             @relation(fields: [roleId], references: [id])
 
-  // Relations
-  company               Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  role                  Role     @relation(fields: [roleId], references: [id])
-  refreshTokens         RefreshToken[]
-  chats                 ChatAssignment[]
-  messages              Message[]
-  userDepartments       UserDepartment[]
-  analytics             Analytics[]
-
-  @@map("users")
   @@index([companyId])
   @@index([email])
   @@index([roleId])
+  @@map("users")
 }
 
 model Role {
-  id                    String   @id @default(uuid())
-  name                  String
-  description           String?
-  isSystem              Boolean  @default(false) @map("is_system") // System roles: super_admin, company_admin, etc.
-  companyId             String?  @map("company_id") // null for system roles, set for custom roles
-  createdAt             DateTime @default(now()) @map("created_at")
-  updatedAt             DateTime @updatedAt @map("updated_at")
+  id              String           @id @default(uuid())
+  name            String
+  description     String?
+  isSystem        Boolean          @default(false) @map("is_system")
+  companyId       String?          @map("company_id")
+  createdAt       DateTime         @default(now()) @map("created_at")
+  updatedAt       DateTime         @updatedAt @map("updated_at")
+  rolePermissions RolePermission[]
+  company         Company?         @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  users           User[]
 
-  // Relations
-  company               Company? @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  users                 User[]
-  rolePermissions       RolePermission[]
-
-  @@map("roles")
-  @@index([companyId])
   @@unique([name, companyId])
+  @@index([companyId])
+  @@map("roles")
 }
 
 model Permission {
-  id                    String   @id @default(uuid())
-  name                  String   @unique
-  description           String?
-  category              String   // e.g., "chat", "user", "billing", "reports"
-  createdAt             DateTime @default(now()) @map("created_at")
-  updatedAt             DateTime @updatedAt @map("updated_at")
-
-  // Relations
-  rolePermissions       RolePermission[]
+  id              String           @id @default(uuid())
+  name            String           @unique
+  description     String?
+  category        String
+  createdAt       DateTime         @default(now()) @map("created_at")
+  updatedAt       DateTime         @updatedAt @map("updated_at")
+  rolePermissions RolePermission[]
 
   @@map("permissions")
 }
 
 model RolePermission {
-  id                    String   @id @default(uuid())
-  roleId                String   @map("role_id")
-  permissionId          String   @map("permission_id")
-  createdAt             DateTime @default(now()) @map("created_at")
+  id           String     @id @default(uuid())
+  roleId       String     @map("role_id")
+  permissionId String     @map("permission_id")
+  createdAt    DateTime   @default(now()) @map("created_at")
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+  role         Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
 
-  // Relations
-  role                  Role     @relation(fields: [roleId], references: [id], onDelete: Cascade)
-  permission            Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
-
-  @@map("role_permissions")
   @@unique([roleId, permissionId])
   @@index([roleId])
   @@index([permissionId])
+  @@map("role_permissions")
 }
 
-// ============================================
-// PLANS & SUBSCRIPTIONS
-// ============================================
-
 model Plan {
-  id                    String   @id @default(uuid())
-  name                  String   @unique // Basic, Pro, Enterprise
-  slug                  String   @unique
-  description           String?
-  price                 Decimal  @db.Decimal(10, 2)
-  currency              String   @default("USD")
-  billingCycle          String   @map("billing_cycle") // monthly, yearly
-  maxUsers              Int      @default(5) @map("max_users")
-  maxAgents             Int      @default(3) @map("max_agents")
-  maxDepartments        Int      @default(2) @map("max_departments")
-  allowedFeatures       String[] @map("allowed_features") // ["roles", "reports", "automation", "api_access"]
-  chatHistoryRetentionDays Int   @default(90) @map("chat_history_retention_days")
-  isActive              Boolean  @default(true) @map("is_active")
-  createdAt             DateTime @default(now()) @map("created_at")
-  updatedAt             DateTime @updatedAt @map("updated_at")
-
-  // Relations
-  subscriptions         Subscription[]
+  id                       String         @id @default(uuid())
+  name                     String         @unique
+  slug                     String         @unique
+  description              String?
+  price                    Decimal        @db.Decimal(10, 2)
+  currency                 String         @default("USD")
+  billingCycle             String         @map("billing_cycle")
+  maxUsers                 Int            @default(5) @map("max_users")
+  maxAgents                Int            @default(3) @map("max_agents")
+  maxDepartments           Int            @default(2) @map("max_departments")
+  allowedFeatures          String[]       @map("allowed_features")
+  chatHistoryRetentionDays Int            @default(90) @map("chat_history_retention_days")
+  isActive                 Boolean        @default(true) @map("is_active")
+  createdAt                DateTime       @default(now()) @map("created_at")
+  updatedAt                DateTime       @updatedAt @map("updated_at")
+  subscriptions            Subscription[]
 
   @@map("plans")
 }
 
 model Subscription {
-  id                    String   @id @default(uuid())
-  companyId             String   @unique @map("company_id")
-  planId                String   @map("plan_id")
-  status                String   // active, cancelled, expired, trial
-  currentPeriodStart    DateTime @map("current_period_start")
-  currentPeriodEnd      DateTime @map("current_period_end")
-  cancelAtPeriodEnd     Boolean  @default(false) @map("cancel_at_period_end")
-  trialEndsAt           DateTime? @map("trial_ends_at")
-  stripeSubscriptionId  String?  @unique @map("stripe_subscription_id")
-  stripeCustomerId      String?  @map("stripe_customer_id")
-  createdAt             DateTime @default(now()) @map("created_at")
-  updatedAt             DateTime @updatedAt @map("updated_at")
+  id                   String    @id @default(uuid())
+  companyId            String    @unique @map("company_id")
+  planId               String    @map("plan_id")
+  status               String
+  currentPeriodStart   DateTime  @map("current_period_start")
+  currentPeriodEnd     DateTime  @map("current_period_end")
+  cancelAtPeriodEnd    Boolean   @default(false) @map("cancel_at_period_end")
+  trialEndsAt          DateTime? @map("trial_ends_at")
+  stripeSubscriptionId String?   @unique @map("stripe_subscription_id")
+  stripeCustomerId     String?   @map("stripe_customer_id")
+  createdAt            DateTime  @default(now()) @map("created_at")
+  updatedAt            DateTime  @updatedAt @map("updated_at")
+  company              Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  plan                 Plan      @relation(fields: [planId], references: [id])
 
-  // Relations
-  company               Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  plan                  Plan     @relation(fields: [planId], references: [id])
-
-  @@map("subscriptions")
   @@index([companyId])
   @@index([status])
+  @@map("subscriptions")
 }
 
-// ============================================
-// CHAT SYSTEM
-// ============================================
-
 model Chat {
-  id                    String   @id @default(uuid())
-  companyId             String   @map("company_id")
-  visitorId             String?  @map("visitor_id") // Unique visitor identifier
-  visitorName           String?  @map("visitor_name")
-  visitorEmail          String?  @map("visitor_email")
-  visitorPhone          String?  @map("visitor_phone")
-  visitorIp             String?  @map("visitor_ip")
-  visitorUserAgent      String?  @map("visitor_user_agent")
-  status                String   @default("pending") // pending, assigned, active, closed, archived
-  priority              String   @default("normal") // low, normal, high, urgent
-  departmentId          String?  @map("department_id")
-  rating                Int?     // 1-5
-  ratingComment         String?  @map("rating_comment")
-  closedAt              DateTime? @map("closed_at")
-  createdAt             DateTime @default(now()) @map("created_at")
-  updatedAt             DateTime @updatedAt @map("updated_at")
+  id               String           @id @default(uuid())
+  companyId        String           @map("company_id")
+  visitorId        String?          @map("visitor_id")
+  visitorName      String?          @map("visitor_name")
+  visitorEmail     String?          @map("visitor_email")
+  visitorPhone     String?          @map("visitor_phone")
+  visitorIp        String?          @map("visitor_ip")
+  visitorUserAgent String?          @map("visitor_user_agent")
+  status           String           @default("pending")
+  priority         String           @default("normal")
+  departmentId     String?          @map("department_id")
+  rating           Int?
+  ratingComment    String?          @map("rating_comment")
+  closedAt         DateTime?        @map("closed_at")
+  createdAt        DateTime         @default(now()) @map("created_at")
+  updatedAt        DateTime         @updatedAt @map("updated_at")
+  assignments      ChatAssignment[]
+  company          Company          @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  department       Department?      @relation(fields: [departmentId], references: [id])
+  messages         Message[]
 
-  // Relations
-  company               Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  department            Department? @relation(fields: [departmentId], references: [id], onDelete: SetNull)
-  messages              Message[]
-  assignments           ChatAssignment[]
-
-  @@map("chats")
-  @@index([companyId, status]) // Composite index for common query pattern
-  @@index([companyId, createdAt(sort: Desc)]) // Optimized for recent chats per company
-  @@index([companyId, departmentId]) // For department filtering
+  @@index([companyId, status])
+  @@index([companyId, createdAt(sort: Desc)])
+  @@index([companyId, departmentId])
   @@index([visitorId])
   @@index([status])
   @@index([createdAt])
+  @@map("chats")
 }
 
 model Message {
-  id                    String   @id @default(uuid())
-  chatId                String   @map("chat_id")
-  senderType            String   @map("sender_type") // visitor, agent, system
-  senderId              String?  @map("sender_id") // User ID if agent, null if visitor
-  content               String   @db.Text
-  messageType           String   @default("text") @map("message_type") // text, image, file, system
-  metadata              Json?    // Additional data (file URL, image URL, etc.)
-  isRead                Boolean  @default(false) @map("is_read")
-  readAt                DateTime? @map("read_at")
-  createdAt             DateTime @default(now()) @map("created_at")
+  id          String    @id @default(uuid())
+  chatId      String    @map("chat_id")
+  senderType  String    @map("sender_type")
+  senderId    String?   @map("sender_id")
+  content     String
+  messageType String    @default("text") @map("message_type")
+  metadata    Json?
+  isRead      Boolean   @default(false) @map("is_read")
+  readAt      DateTime? @map("read_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  chat        Chat      @relation(fields: [chatId], references: [id], onDelete: Cascade)
+  sender      User?     @relation(fields: [senderId], references: [id])
 
-  // Relations
-  chat                  Chat     @relation(fields: [chatId], references: [id], onDelete: Cascade)
-  sender                User?    @relation(fields: [senderId], references: [id], onDelete: SetNull)
-
-  @@map("messages")
-  @@index([chatId, createdAt(sort: Asc)]) // Composite index for chat message history
-  @@index([chatId, isRead]) // For unread message queries
-  @@index([createdAt(sort: Desc)]) // For recent messages across all chats
+  @@index([chatId, createdAt])
+  @@index([chatId, isRead])
+  @@index([createdAt(sort: Desc)])
   @@index([senderId])
   @@index([senderType])
+  @@map("messages")
 }
 
 model ChatAssignment {
-  id                    String   @id @default(uuid())
-  chatId                String   @map("chat_id")
-  agentId               String   @map("agent_id")
-  assignedBy            String?  @map("assigned_by") // User ID who assigned
-  assignedAt            DateTime @default(now()) @map("assigned_at")
-  unassignedAt          DateTime? @map("unassigned_at")
-  isActive              Boolean  @default(true) @map("is_active")
+  id           String    @id @default(uuid())
+  chatId       String    @map("chat_id")
+  agentId      String    @map("agent_id")
+  assignedBy   String?   @map("assigned_by")
+  assignedAt   DateTime  @default(now()) @map("assigned_at")
+  unassignedAt DateTime? @map("unassigned_at")
+  isActive     Boolean   @default(true) @map("is_active")
+  agent        User      @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  chat         Chat      @relation(fields: [chatId], references: [id], onDelete: Cascade)
 
-  // Relations
-  chat                  Chat     @relation(fields: [chatId], references: [id], onDelete: Cascade)
-  agent                 User     @relation(fields: [agentId], references: [id], onDelete: Cascade)
-
-  @@map("chat_assignments")
   @@index([chatId])
   @@index([agentId])
   @@index([isActive])
+  @@map("chat_assignments")
 }
 
-// ============================================
-// DEPARTMENTS
-// ============================================
-
 model Department {
-  id                    String   @id @default(uuid())
-  companyId             String   @map("company_id")
-  name                  String
-  description           String?
-  isActive              Boolean  @default(true) @map("is_active")
-  createdAt             DateTime @default(now()) @map("created_at")
-  updatedAt             DateTime @updatedAt @map("updated_at")
+  id              String           @id @default(uuid())
+  companyId       String           @map("company_id")
+  name            String
+  description     String?
+  isActive        Boolean          @default(true) @map("is_active")
+  createdAt       DateTime         @default(now()) @map("created_at")
+  updatedAt       DateTime         @updatedAt @map("updated_at")
+  chats           Chat[]
+  company         Company          @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  userDepartments UserDepartment[]
 
-  // Relations
-  company               Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  chats                 Chat[]
-  userDepartments       UserDepartment[]
-
-  @@map("departments")
-  @@index([companyId])
   @@unique([companyId, name])
+  @@index([companyId])
+  @@map("departments")
 }
 
 model UserDepartment {
-  id                    String   @id @default(uuid())
-  userId                String   @map("user_id")
-  departmentId          String   @map("department_id")
-  createdAt             DateTime @default(now()) @map("created_at")
+  id           String     @id @default(uuid())
+  userId       String     @map("user_id")
+  departmentId String     @map("department_id")
+  createdAt    DateTime   @default(now()) @map("created_at")
+  department   Department @relation(fields: [departmentId], references: [id], onDelete: Cascade)
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  // Relations
-  user                  User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  department            Department @relation(fields: [departmentId], references: [id], onDelete: Cascade)
-
-  @@map("user_departments")
   @@unique([userId, departmentId])
   @@index([userId])
   @@index([departmentId])
+  @@map("user_departments")
 }
 
-// ============================================
-// AUTHENTICATION
-// ============================================
-
 model RefreshToken {
-  id                    String   @id @default(uuid())
-  userId                String   @map("user_id")
-  token                 String   @unique
-  expiresAt             DateTime @map("expires_at")
-  isRevoked             Boolean  @default(false) @map("is_revoked")
-  createdAt             DateTime @default(now()) @map("created_at")
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  token     String   @unique
+  expiresAt DateTime @map("expires_at")
+  isRevoked Boolean  @default(false) @map("is_revoked")
+  createdAt DateTime @default(now()) @map("created_at")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  // Relations
-  user                  User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@map("refresh_tokens")
   @@index([userId])
   @@index([token])
   @@index([expiresAt])
+  @@map("refresh_tokens")
 }
 
-// ============================================
-// ANALYTICS
-// ============================================
-
 model Analytics {
-  id                    String   @id @default(uuid())
-  companyId             String   @map("company_id")
-  userId                String?  @map("user_id")
-  eventType             String   @map("event_type") // chat_created, message_sent, chat_closed, etc.
-  eventData             Json?    @map("event_data")
-  createdAt             DateTime @default(now()) @map("created_at")
+  id        String   @id @default(uuid())
+  companyId String   @map("company_id")
+  userId    String?  @map("user_id")
+  eventType String   @map("event_type")
+  eventData Json?    @map("event_data")
+  createdAt DateTime @default(now()) @map("created_at")
+  company   Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  user      User?    @relation(fields: [userId], references: [id])
 
-  // Relations
-  company               Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  user                  User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
-
-  @@map("analytics")
   @@index([companyId])
   @@index([eventType])
   @@index([createdAt])
+  @@map("analytics")
 }
-

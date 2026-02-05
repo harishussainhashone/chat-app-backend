@@ -5,6 +5,7 @@ import {
   ForbiddenException,
 } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
+import type { Prisma } from '@prisma/client';
 import { PrismaService } from '../database/prisma.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -47,7 +48,7 @@ export class UsersService {
     const hashedPassword = await bcrypt.hash(createUserDto.password, 10);
 
     // Create user with departments
-    const user = await this.prisma.$transaction(async (tx) => {
+    const user = await this.prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       const newUser = await tx.user.create({
         data: {
           email: createUserDto.email,
@@ -193,7 +194,7 @@ export class UsersService {
     }
 
     // Update user
-    const updatedUser = await this.prisma.$transaction(async (tx) => {
+    const updatedUser = await this.prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       const userUpdate: any = {
         firstName: updateUserDto.firstName,
         lastName: updateUserDto.lastName,

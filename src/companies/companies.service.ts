@@ -134,7 +134,6 @@ export class CompaniesService {
           include: {
             plan: true,
           },
-          take: 1,
         },
         _count: {
           select: {
@@ -149,7 +148,7 @@ export class CompaniesService {
     if (company) {
       return {
         ...company,
-        subscription: company.subscriptions[0] || null,
+        subscription: company.subscriptions ?? null,
       };
     }
 

@@ -1,11 +1,20 @@
 import { Injectable, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
-import { PrismaClient } from '@prisma/client';
 import { PrismaService } from './prisma.service';
 
 /**
  * Enhanced Prisma Service with tenant context support
  * Automatically applies company_id filter to all queries
  */
+if (process.env.PRISMA_CLIENT_ENGINE_TYPE === 'client') {
+  // Avoid "client" engine unless an adapter/accelerate URL is configured.
+  process.env.PRISMA_CLIENT_ENGINE_TYPE = 'library';
+}
+
+type PrismaClientType = import('@prisma/client').PrismaClient;
+const { PrismaClient } = require('@prisma/client') as {
+  PrismaClient: new (...args: any[]) => PrismaClientType;
+};
+
 @Injectable()
 export class TenantPrismaService extends PrismaClient implements OnModuleInit, OnModuleDestroy {
   private currentTenant: { companyId: string; schemaName?: string } | null = null;
@@ -42,7 +51,7 @@ export class TenantPrismaService extends PrismaClient implements OnModuleInit, O
    */
   async withTenant<T>(
     companyId: string,
-    callback: (prisma: PrismaClient) => Promise<T>,
+    callback: (prisma: PrismaClientType) => Promise<T>,
   ): Promise<T> {
     const originalTenant = this.currentTenant;
     this.setTenant({ companyId });
